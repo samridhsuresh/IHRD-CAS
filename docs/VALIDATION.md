@@ -1,0 +1,8 @@
+# Validation recorded on 22 October 2026
+
+- Backend: `python -m pytest -q` completed with **6 passed, 1 warning**. The warning is a Starlette TestClient deprecation notice in its dependency stack.
+- Tests use a disposable SQLite database and fictional students. Covered: login and role permissions, teacher account creation/password change, class restrictions, CSRF and deactivation, duplicate student prevention, atomic CSV import, daily and subject sessions, arrival-based lateness, optimistic version conflicts, finalized attendance correction and audit, holiday exclusion, excused percentage, class transfers and history, CSV/PDF exports, queued SMS after finalization, mock delivery, and cancellation of unsent outdated alerts.
+- Fresh Alembic upgrade on SQLite created **20 tables**, including `attendance_sessions.session_key`.
+- Frontend: `npm run build` completed successfully with TypeScript checks. Production entry JavaScript was roughly **69 KiB gzip** and CSS roughly **6 KiB gzip**.
+- A local backend started with a disposable SQLite database and three fictional seed records. Vite started on `127.0.0.1:5173` in this environment. The available browser is remote and could not connect to the local preview, so no visual browser walkthrough or Lighthouse score was measured.
+- **Not yet verified:** actual MySQL 8/8.4 integration, Windows lab installation, managed hosting, backup restoration, provider/DLT SMS acceptance, browser PWA install and accessibility on physical Android hardware, and live handset delivery receipts. Do these with institutionally authorized staging before production.
