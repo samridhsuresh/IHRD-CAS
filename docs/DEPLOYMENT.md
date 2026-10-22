@@ -1,6 +1,14 @@
 # Production deployment preparation
 
-**No deployment or paid resource has been created.** Ask the college to approve provider accounts, costs, privacy procedures, and SMS before going live.
+Ask the college to approve provider accounts, costs, privacy procedures, and SMS before using real records.
+
+## Vercel deployment for `ihrdcask-track`
+
+The repository root `vercel.json` defines a Vite frontend and FastAPI backend as one Vercel Services deployment (a Beta feature). `/api/*` and `/health` reach FastAPI; browser routes reach the SPA. Keep the project root at the repository root. The browser uses same-origin `/api` requests, so leave `VITE_API_BASE` empty.
+
+The deployment requires a managed **MySQL** database before login and attendance work. Vercel's Hobby plan can host the app subject to its usage limits, but a suitable MySQL service may incur a separate monthly charge. Do not provision a paid database without approval. Configure `DATABASE_URL` as an encrypted production/preview environment secret, using TLS and a database endpoint that is not open to arbitrary public connections. Set `SECURE_COOKIES=true`, `COOKIE_SAMESITE=lax`, and keep both `SMS_ENABLED=false` and `SMS_COLLEGE_APPROVED=false`. `FRONTEND_ORIGIN` must match the exact HTTPS deployment origin for CORS; same-origin browser requests need no cross-origin permission. Do not store secrets in Git.
+
+Run Alembic migrations and initial administrator bootstrap from a secure environment with access to the database. Vercel Functions are stateless and do not run the SMS worker continuously. Configure a controlled scheduled processor separately once notification policy is approved. Verify database access, authentication, permissions, and the mobile UI before using real records. A static login screen alone is not a working deployment.
 
 ## Suggested topology and current estimate (checked 22 October 2026)
 
