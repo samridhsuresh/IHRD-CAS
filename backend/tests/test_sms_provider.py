@@ -2,6 +2,7 @@ from app.config import settings
 from app.db import SessionLocal
 from app.models import Guardian, SmsDeliveryLog, SmsMessage, SmsTemplate, Student
 from app.sms import delivery
+from conftest import setup
 
 
 def test_opted_in_provider_receives_approved_template_once(client, monkeypatch):
@@ -58,3 +59,17 @@ def test_opted_in_provider_receives_approved_template_once(client, monkeypatch):
         'template_id': 'synthetic-template',
     }
     assert timeout == 10
+
+
+def test_guardian_mobile_is_normalized_for_delivery(client, admin):
+    cls = setup(client, admin)
+    created = client.post('/api/students', json={
+        'full_name': 'Synthetic Student', 'admission_number': 'MOBILE-1',
+        'roll_number': '1', 'class_id': cls, 'enrollment_date': '2026-10-01',
+        'guardian_name': 'Synthetic Guardian',
+        'guardian_phone': '+91 98765 43210',
+    }, headers=admin)
+    assert created.status_code == 200, created.text
+    assert created.json()['guardian']['phone'] == '+919876543210'
+    assert client.patch(f"/api/students/{created.json()['id']}",
+                        json={'guardian_phone': ''}, headers=admin).status_code == 422

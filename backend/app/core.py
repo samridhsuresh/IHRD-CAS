@@ -161,6 +161,19 @@ def unassign(id:int,u:User=Depends(admin_write),db:Session=Depends(get_db)):
     if not x: raise HTTPException(404,'Assignment not found')
     audit(db,u,'removed',x);db.delete(x);db.commit();return {'ok':True}
 
+def normalize_phone(value: str | None) -> str | None:
+    if value is None or not value.strip():
+        return None
+    number = re.sub(r'[\s()-]', '', value)
+    if re.fullmatch(r'[6-9]\d{9}', number):
+        return '+91' + number
+    if re.fullmatch(r'91[6-9]\d{9}', number):
+        return '+' + number
+    if re.fullmatch(r'\+[1-9]\d{7,14}', number):
+        return number
+    raise ValueError('Use a valid mobile number, optionally with country prefix')
+
+
 class StudentIn(BaseModel):
     full_name:str=Field(min_length=2,max_length=160)
     admission_number:str=Field(min_length=2,max_length=60)
@@ -172,12 +185,18 @@ class StudentIn(BaseModel):
     secondary_phone:str|None=None
     email:str|None=None
     notes:str|None=None
-    @field_validator('guardian_phone','secondary_phone')
+    @field_validator('guardian_phone')
     @classmethod
     def phone(cls,v):
-        if v is None or v=='': return None
-        if not re.fullmatch(r'(?:\+91|91)?[6-9]\d{9}|\+[1-9]\d{7,14}',v): raise ValueError('Use a valid mobile number, optionally with country prefix')
-        return v
+        normalized = normalize_phone(v)
+        if normalized is None:
+            raise ValueError('Guardian mobile number is required')
+        return normalized
+
+    @field_validator('secondary_phone')
+    @classmethod
+    def secondary_mobile(cls,v):
+        return normalize_phone(v)
 
 @router.get('/students')
 def students(class_id:int|None=None,q:str='',page:int=Query(1,ge=1),limit:int=Query(25,ge=1,le=100),u:User=Depends(current_user),db:Session=Depends(get_db)):
@@ -237,8 +256,10 @@ class StudentPatch(BaseModel):
     @field_validator('guardian_phone')
     @classmethod
     def phone(cls,v):
-        if v and not re.fullmatch(r'(?:\+91|91)?[6-9]\d{9}|\+[1-9]\d{7,14}',v): raise ValueError('Invalid phone')
-        return v
+        normalized = normalize_phone(v)
+        if normalized is None:
+            raise ValueError('Guardian mobile number cannot be empty')
+        return normalized
 @router.patch('/students/{id}')
 def update_student(id:int,data:StudentPatch,u:User=Depends(require_write),db:Session=Depends(get_db)):
     if u.role!='admin' and not u.can_manage_students: raise HTTPException(403,'Permission required')
