@@ -1,9 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 from .config import settings
+from .db import engine
 from . import auth,core,attendance,sms,reports
 
 app=FastAPI(title='CampusTrack API',version='1.0.0',docs_url=None,redoc_url=None)
+@app.exception_handler(OperationalError)
+async def unavailable_database(request: Request, exc: OperationalError):
+    return JSONResponse(status_code=503,content={'detail':'Database temporarily unavailable'})
 @app.middleware('http')
 async def security_headers(request: Request, call_next):
     response=await call_next(request)
@@ -18,4 +25,10 @@ async def security_headers(request: Request, call_next):
 app.add_middleware(CORSMiddleware,allow_origins=[settings.frontend_origin.rstrip('/')],allow_credentials=True,allow_methods=['GET','POST','PUT','PATCH','DELETE'],allow_headers=['Content-Type','X-CSRF-Token'])
 for router in (auth.router,core.router,attendance.router,sms.router,reports.router):app.include_router(router,prefix='/api')
 @app.get('/health')
-def health():return {'status':'ok'}
+def health():
+    try:
+        with engine.connect() as connection:
+            connection.execute(text('SELECT 1'))
+    except OperationalError:
+        raise HTTPException(503,'Database temporarily unavailable')
+    return {'status':'ok'}

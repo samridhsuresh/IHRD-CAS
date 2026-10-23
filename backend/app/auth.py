@@ -42,7 +42,9 @@ def require_write(request:Request,u:User=Depends(current_user)):
     supplied=request.headers.get('x-csrf-token','')
     if not supplied or not secrets.compare_digest(supplied,s.csrf_token): raise HTTPException(403,'CSRF token missing or invalid')
     origin=request.headers.get('origin')
-    if origin and origin!=settings.frontend_origin.rstrip('/'): raise HTTPException(403,'Origin rejected')
+    same_origin=f'{request.url.scheme}://{request.headers.get("host", "")}'
+    if origin and origin not in (settings.frontend_origin.rstrip('/'),same_origin):
+        raise HTTPException(403,'Origin rejected')
     if u.must_change_password and request.url.path not in ('/api/auth/password','/api/auth/logout'):
         raise HTTPException(403,'Change temporary password first')
     return u

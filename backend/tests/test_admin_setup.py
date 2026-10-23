@@ -41,3 +41,14 @@ def test_admin_can_set_teacher_temporary_password(client, admin):
     assert client.post('/api/auth/login', json={
         'username': 'student', 'password': temporary,
     }).status_code == 401
+
+
+def test_same_origin_write_and_cross_origin_rejection(client, admin):
+    own = {**admin, 'Origin': 'http://testserver'}
+    assert client.post('/api/auth/password', json={
+        'old_password': 'administrator-secret',
+        'new_password': 'new-fictional-secret-123',
+    }, headers=own).status_code == 200
+    alien = {**admin, 'Origin': 'https://untrusted.example'}
+    assert client.post('/api/auth/logout', headers=alien).status_code == 403
+    assert client.get('/health').json() == {'status': 'ok'}
