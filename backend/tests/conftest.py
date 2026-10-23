@@ -13,7 +13,7 @@ import pytest
 def client():
     Base.metadata.drop_all(engine);Base.metadata.create_all(engine)
     with SessionLocal() as db:
-        db.add(User(username='admin',full_name='Test Admin',role='admin',password_hash=password_hash('administrator-secret')))
+        db.add(User(username='admin',full_name='Test Admin',role='admin',admin_slot=1,password_hash=password_hash('administrator-secret')))
         db.commit()
     with TestClient(app) as client:
         yield client

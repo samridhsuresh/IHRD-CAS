@@ -1,12 +1,15 @@
-# CampusTrack
+# IHRD CASK tracker
 
 A private staff attendance application built with React, TypeScript, Vite, Tailwind CSS, FastAPI, SQLAlchemy, Alembic, and MySQL. Students and parents do not have accounts. It has an administrator interface, teacher assignments, student/guardian records, effective-dated enrollment, holiday controls, attendance sessions with optimistic concurrency, reports, audit events, and an SMS outbox with mock delivery by default.
+
+All saved staff, student, attendance, calendar, and SMS records use the configured MySQL database. A cloud installation is only ready for real use after a persistent managed MySQL service, migrations, one administrator bootstrap, and tested backups are in place. The repository does not contain an administrator password.
 
 ## Start here
 
 - [Windows college lab setup](docs/WINDOWS_SETUP.md)
 - [Teacher and administrator guides](docs/OPERATIONS.md)
 - [Deployment, security, and cost preparation](docs/DEPLOYMENT.md)
+- [Data retention and recovery](docs/DATA_SAFETY.md)
 - [Entity relationship diagram](docs/ERD.md)
 
 ## Local quick reference

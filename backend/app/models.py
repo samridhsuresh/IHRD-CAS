@@ -1,5 +1,5 @@
 from datetime import datetime, date, time, timezone
-from sqlalchemy import String, Integer, Date, DateTime, Time, Boolean, ForeignKey, UniqueConstraint, Index, Text, JSON
+from sqlalchemy import String, Integer, Date, DateTime, Time, Boolean, ForeignKey, UniqueConstraint, CheckConstraint, Index, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 
@@ -13,10 +13,15 @@ class User(Base):
     staff_id: Mapped[str|None]=mapped_column(String(60), unique=True, nullable=True)
     password_hash: Mapped[str]=mapped_column(String(255))
     role: Mapped[str]=mapped_column(String(20), default='teacher')
+    admin_slot: Mapped[int|None]=mapped_column(Integer, nullable=True)
     active: Mapped[bool]=mapped_column(Boolean, default=True)
     must_change_password: Mapped[bool]=mapped_column(Boolean, default=False)
     can_manage_students: Mapped[bool]=mapped_column(Boolean, default=False)
     created_at: Mapped[datetime]=mapped_column(DateTime(timezone=True), default=now)
+    __table_args__=(
+        UniqueConstraint('admin_slot',name='uq_users_admin_slot'),
+        CheckConstraint("(role = 'admin' AND admin_slot = 1) OR (role = 'teacher' AND admin_slot IS NULL)",name='ck_users_staff_role'),
+    )
 
 class AuthSession(Base):
     __tablename__='auth_sessions'

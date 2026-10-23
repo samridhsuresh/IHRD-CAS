@@ -35,6 +35,7 @@ class TeacherIn(BaseModel):
     full_name:str=Field(min_length=2,max_length=160)
     staff_id:str=Field(min_length=1,max_length=60)
     can_manage_students:bool=False
+    temporary_password:str|None=Field(default=None,min_length=12,max_length=128)
 
 @router.get('/teachers')
 def teachers(u:User=Depends(require_admin),db:Session=Depends(get_db)):
@@ -42,8 +43,8 @@ def teachers(u:User=Depends(require_admin),db:Session=Depends(get_db)):
 
 @router.post('/teachers')
 def teacher_create(data:TeacherIn,u:User=Depends(admin_write),db:Session=Depends(get_db)):
-    temp=secrets.token_urlsafe(18)
-    x=User(**data.model_dump(),role='teacher',password_hash=password_hash(temp),must_change_password=True)
+    temp=data.temporary_password or secrets.token_urlsafe(18)
+    x=User(**data.model_dump(exclude={'temporary_password'}),role='teacher',password_hash=password_hash(temp),must_change_password=True)
     db.add(x);save(db);audit(db,u,'created',x);db.commit()
     return {'teacher':user_dict(x),'temporary_password':temp}
 
