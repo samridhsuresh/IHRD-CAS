@@ -45,7 +45,10 @@ def teachers(u:User=Depends(require_admin),db:Session=Depends(get_db)):
 def teacher_create(data:TeacherIn,u:User=Depends(admin_write),db:Session=Depends(get_db)):
     temp=data.temporary_password or secrets.token_urlsafe(18)
     x=User(**data.model_dump(exclude={'temporary_password'}),role='teacher',password_hash=password_hash(temp),must_change_password=True)
-    db.add(x);save(db);audit(db,u,'created',x);db.commit()
+    db.add(x)
+    try: db.flush()
+    except IntegrityError: db.rollback();raise HTTPException(409,'Username or staff identifier already exists')
+    audit(db,u,'created',x);save(db)
     return {'teacher':user_dict(x),'temporary_password':temp}
 
 class TeacherUpdate(BaseModel):
